@@ -48,4 +48,8 @@ return [
         'redirect' => env('TWITTER_SERVICE_CALLBACK'),
     ],
 
+    'mapbox' => [
+        'token' => env('MAPBOX_TOKEN', ''),
+    ],
+
 ];
