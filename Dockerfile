@@ -32,8 +32,9 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-
 ENV NODE_OPTIONS=--openssl-legacy-provider
 RUN npm install && npm run production
 
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 storage bootstrap/cache public/storage
+RUN mkdir -p storage/app/public public/storage \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache
 
 RUN a2enmod rewrite headers
 
