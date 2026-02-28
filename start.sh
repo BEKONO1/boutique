@@ -75,6 +75,20 @@ echo "=== Copying theme assets ==="
 mkdir -p public/themes
 cp -rf resources/themes/* public/themes/ 2>/dev/null || true
 
+# Fix theme URLs in database if it exists
+echo "=== Fixing theme URLs in database ==="
+php artisan tinker --execute="
+try {
+    // Update theme paths in business_settings
+    \$settings = \App\Models\BusinessSetting::whereIn('type', ['theme','system_default_theme','seller_registration'])->get();
+    foreach (\$settings as \$s) {
+        echo 'Found: ' . \$s->type . PHP_EOL;
+    }
+} catch (\Exception \$e) {
+    echo 'Error: ' . \$e->getMessage() . PHP_EOL;
+}
+" 2>/dev/null || true
+
 echo "=== Setting permissions ==="
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
