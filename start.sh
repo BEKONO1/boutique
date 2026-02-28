@@ -4,210 +4,55 @@ set -e
 echo "=== Railway Deployment Start ==="
 
 # Enable error reporting
-sed -i "s/APP_DEBUG=.*/APP_DEBUG=true/" .env
-sed -i "s/LOG_CHANNEL=.*/LOG_CHANNEL=stderr/" .env
-sed -i "s/DEVELOPMENT_ENVIRONMENT=.*/DEVELOPMENT_ENVIRONMENT=true/" .env
-sed -i "/DEVELOPMENT_ENVIRONMENT=/a DEVELOPMENT_ENVIRONMENT=true" .env 2>/dev/null || true
 export APP_DEBUG=true
 export LOG_CHANNEL=stderr
 export DEVELOPMENT_ENVIRONMENT=true
 
 # ============================================
-# CONFIGURATION BASE DE DONNÉES
+# CONFIGURATION BASE DE DONNÉES (simplifiée)
 # ============================================
-# Railway MySQL variables
-if [ -n "$MYSQLHOST" ]; then
-    DB_HOST_VAL="$MYSQLHOST"
-    DB_PORT_VAL="${MYSQLPORT:-3306}"
-    DB_DATABASE_VAL="${MYSQLDATABASE:-railway}"
-    DB_USERNAME_VAL="${MYSQLUSER:-root}"
-    DB_PASSWORD_VAL="${MYSQLPASSWORD:-}"
-elif [ -n "$DB_HOST" ]; then
-    DB_HOST_VAL="$DB_HOST"
-    DB_PORT_VAL="${DB_PORT:-3306}"
-    DB_DATABASE_VAL="${DB_DATABASE:-railway}"
-    DB_USERNAME_VAL="${DB_USERNAME:-root}"
-    DB_PASSWORD_VAL="${DB_PASSWORD:-}"
-elif [ -n "$DATABASE_URL" ]; then
-    # Parse DATABASE_URL format: mysql://user:password@host:port/database
-    DB_HOST_VAL=$(echo "$DATABASE_URL" | sed -n 's/.*@\([^:]*\):.*/\1/p')
-    DB_PORT_VAL=$(echo "$DATABASE_URL" | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
-    DB_DATABASE_VAL=$(echo "$DATABASE_URL" | sed -n 's/.*\/\([^?]*\).*/\1/p')
-    DB_USERNAME_VAL=$(echo "$DATABASE_URL" | sed -n 's/mysql:\/\/\([^:]*\):.*/\1/p')
-    DB_PASSWORD_VAL=$(echo "$DATABASE_URL" | sed -n 's/mysql:\/\/[^:]*:\([^@]*\)@.*/\1/p')
-else
-    DB_HOST_VAL="mysql.railway.internal"
-    DB_PORT_VAL="3306"
-    DB_DATABASE_VAL="railway"
-    DB_USERNAME_VAL="root"
-    DB_PASSWORD_VAL=""
+DB_HOST_VAL=${MYSQLHOST:-${DB_HOST:-mysql.railway.internal}}
+DB_PORT_VAL=${MYSQLPORT:-${DB_PORT:-3306}}
+DB_DATABASE_VAL=${MYSQLDATABASE:-${DB_DATABASE:-railway}}
+DB_USERNAME_VAL=${MYSQLUSER:-${DB_USERNAME:-root}}
+DB_PASSWORD_VAL=${MYSQLPASSWORD:-${DB_PASSWORD:-}}
+
+echo "DB Host: $DB_HOST_VAL"
+
+# ============================================
+# CRÉATION .env
+# ============================================
+if [ ! -f ".env" ]; then
+    cp .env.example .env
 fi
 
-echo "DB Configuration:"
-echo "  Host: $DB_HOST_VAL"
-echo "  Port: $DB_PORT_VAL"
-echo "  Database: $DB_DATABASE_VAL"
-echo "  User: $DB_USERNAME_VAL"
+# Update .env
+sed -i "s|APP_URL=.*|APP_URL=${APP_URL:-https://boutique-production-4ebe.up.railway.app}|" .env
+sed -i "s|ASSET_URL=.*|ASSET_URL=${APP_URL:-https://boutique-production-4ebe.up.railway.app}|" .env
+sed -i "s|APP_DEBUG=.*|APP_DEBUG=true|" .env
+sed -i "s|LOG_CHANNEL=.*|LOG_CHANNEL=stderr|" .env
+sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST_VAL|" .env
+sed -i "s|DB_PORT=.*|DB_PORT=$DB_PORT_VAL|" .env
+sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_DATABASE_VAL|" .env
+sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME_VAL|" .env
+sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD_VAL|" .env
+sed -i "s|DEVELOPMENT_ENVIRONMENT=.*|DEVELOPMENT_ENVIRONMENT=true|" .env
 
-# ============================================
-# CONFIGURATION APP URL
-# ============================================
-APP_URL_VAL=${APP_URL:-https://votre-app.up.railway.app}
-
-# ============================================
-# CONFIGURATION REDIS (optionnel)
-# ============================================
-if [ -n "$REDISHOST" ]; then
-    REDIS_HOST_VAL="$REDISHOST"
-    REDIS_PORT_VAL="${REDISPORT:-6379}"
-    REDIS_PASSWORD_VAL="${REDISPASSWORD:-}"
-    CACHE_DRIVER_VAL="redis"
-    SESSION_DRIVER_VAL="redis"
-    echo "Redis detected at ${REDIS_HOST_VAL}:${REDIS_PORT_VAL}"
-else
-    CACHE_DRIVER_VAL="file"
-    SESSION_DRIVER_VAL="file"
-    echo "No Redis - using file cache"
-fi
-
-# ============================================
-# CRÉATION/MISE À JOUR DU FICHIER .env
-# ============================================
-if [ -f ".env" ]; then
-    echo "Updating existing .env file..."
-
-    sed -i "s|^APP_URL=.*|APP_URL=${APP_URL_VAL}|g" .env
-    sed -i "s|^ASSET_URL=.*|ASSET_URL=${APP_URL_VAL}|g" .env
-
-    if ! grep -q "^ASSET_URL=" .env; then
-        echo "ASSET_URL=${APP_URL_VAL}" >> .env
-    fi
-
-    sed -i "s|^DB_HOST=.*|DB_HOST=${DB_HOST_VAL}|g" .env
-    sed -i "s|^DB_PORT=.*|DB_PORT=${DB_PORT_VAL}|g" .env
-    sed -i "s|^DB_DATABASE=.*|DB_DATABASE=${DB_DATABASE_VAL}|g" .env
-    sed -i "s|^DB_USERNAME=.*|DB_USERNAME=${DB_USERNAME_VAL}|g" .env
-    sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD_VAL}|g" .env
-
-    sed -i "s|^CACHE_DRIVER=.*|CACHE_DRIVER=${CACHE_DRIVER_VAL}|g" .env
-    sed -i "s|^SESSION_DRIVER=.*|SESSION_DRIVER=${SESSION_DRIVER_VAL}|g" .env
-    sed -i "s|^FILESYSTEM_DRIVER=.*|FILESYSTEM_DRIVER=public|g" .env
-
-    sed -i "/^REDIS_HOST=/d" .env
-    sed -i "/^REDIS_PORT=/d" .env
-    sed -i "/^REDIS_PASSWORD=/d" .env
-
-    if [ "$CACHE_DRIVER_VAL" = "redis" ]; then
-        echo "REDIS_HOST=${REDIS_HOST_VAL}" >> .env
-        echo "REDIS_PORT=${REDIS_PORT_VAL}" >> .env
-        [ -n "$REDIS_PASSWORD_VAL" ] && echo "REDIS_PASSWORD=${REDIS_PASSWORD_VAL}" >> .env
-    fi
-else
-    echo "Creating new .env file..."
-
-    cat > .env << EOF
-APP_NAME="6Valley"
-APP_ENV=production
-APP_KEY=
-APP_DEBUG=false
-APP_URL=${APP_URL_VAL}
-ASSET_URL=${APP_URL_VAL}
-LOG_CHANNEL=stderr
-LOG_LEVEL=error
-
-DB_CONNECTION=mysql
-DB_HOST=${DB_HOST_VAL}
-DB_PORT=${DB_PORT_VAL}
-DB_DATABASE=${DB_DATABASE_VAL}
-DB_USERNAME=${DB_USERNAME_VAL}
-DB_PASSWORD=${DB_PASSWORD_VAL}
-
-CACHE_DRIVER=${CACHE_DRIVER_VAL}
-QUEUE_CONNECTION=sync
-SESSION_DRIVER=${SESSION_DRIVER_VAL}
-FILESYSTEM_DRIVER=public
-EOF
-
-    if [ "$CACHE_DRIVER_VAL" = "redis" ]; then
-        cat >> .env << EOF
-
-REDIS_HOST=${REDIS_HOST_VAL}
-REDIS_PORT=${REDIS_PORT_VAL}
-EOF
-        [ -n "$REDIS_PASSWORD_VAL" ] && echo "REDIS_PASSWORD=${REDIS_PASSWORD_VAL}" >> .env
-    fi
-fi
-
-# ============================================
-# COMMANDES ARTISAN
-# ============================================
-echo "Generating app key..."
+echo "=== Generating app key ==="
 php artisan key:generate --force
 
-echo "Discovering packages..."
-php artisan package:discover --ansi || true
-
-echo "Creating storage link..."
+echo "=== Creating storage link ==="
 php artisan storage:link --force 2>/dev/null || true
 
-# ============================================
-# ATTENTE BASE DE DONNÉES
-# ============================================
-echo "Waiting for database..."
-sleep 10
-
-echo "Testing database connection with mysql client..."
-DB_READY=false
-for i in {1..15}; do
-    if mysql -h "$DB_HOST_VAL" -P "$DB_PORT_VAL" -u "$DB_USERNAME_VAL"${DB_PASSWORD_VAL:+" -p$DB_PASSWORD_VAL"} -e "SELECT 1" "$DB_DATABASE_VAL" >/dev/null 2>&1; then
-        DB_READY=true
-        break
-    fi
-    echo "Waiting for database connection... ($i/15)"
-    sleep 2
-done
-
-if [ "$DB_READY" = true ]; then
-    echo "Database connected!"
-    # ============================================
-    # MIGRATIONS
-    # ============================================
-    echo "Running migrations..."
-    php artisan migrate --force --no-interaction || true
-else
-    echo "Database not available - skipping migrations"
-fi
-
-# ============================================
-# CACHE & ASSETS
-# ============================================
-echo "Clearing cache..."
+echo "=== Clearing cache ==="
 php artisan config:clear 2>/dev/null || true
 php artisan cache:clear 2>/dev/null || true
 php artisan view:clear 2>/dev/null || true
 
-echo "Caching config..."
-php artisan config:cache --no-interaction || true
-php artisan route:cache --no-interaction || true
-php artisan view:cache --no-interaction || true
+echo "=== Setting permissions ==="
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
-# ============================================
-# PERMISSIONS
-# ============================================
-echo "Setting permissions..."
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-
-# ============================================
-# DÉMARRAGE SERVEUR PHP
-# ============================================
-echo "=== Testing PHP ==="
-php -v
-
-echo "=== Testing Laravel ==="
-cd /var/www/html
-php artisan --version
-
-echo "=== Starting PHP built-in server on port 8080 ==="
+echo "=== Starting PHP server on port ${PORT:-8080} ==="
 cd /var/www/html/public
-exec php -S 0.0.0.0:8080 -t /var/www/html/public
+exec php -S 0.0.0.0:${PORT:-8080} -t /var/www/html/public
