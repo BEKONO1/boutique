@@ -36,15 +36,8 @@ RUN mkdir -p storage/app/public public/storage \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
-RUN a2dismod mpm_event mpm_worker 2>/dev/null || true
-RUN a2enmod rewrite headers
-
-COPY ./.htaccess /var/www/html/public/.htaccess
-
-COPY apache-vhost.conf /etc/apache2/sites-available/000-default.conf
-
 RUN chmod +x start.sh
 
-EXPOSE 80
+EXPOSE 8080
 
 CMD ["./start.sh"]

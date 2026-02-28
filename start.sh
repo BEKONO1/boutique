@@ -3,6 +3,10 @@ set -e
 
 echo "=== Railway Deployment Start ==="
 
+# Enable error reporting
+export APP_DEBUG=true
+export LOG_CHANNEL=stderr
+
 # ============================================
 # CONFIGURATION BASE DE DONNÉES
 # ============================================
@@ -190,7 +194,8 @@ chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # ============================================
-# DÉMARRAGE APACHE
+# DÉMARRAGE SERVEUR PHP
 # ============================================
-echo "=== Starting Apache ==="
-exec apache2-foreground
+echo "=== Starting PHP built-in server on port 8080 ==="
+cd /var/www/html/public
+exec php -S 0.0.0.0:8080 -t /var/www/html/public
