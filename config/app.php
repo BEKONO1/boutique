@@ -64,7 +64,7 @@ return [
     |
     */
 
-    'web_theme' => env('WEB_THEME', 'theme_aster'),
+    'web_theme' => 'theme_aster',
 
     /*
     |--------------------------------------------------------------------------
