@@ -6,11 +6,39 @@ echo "=== Railway Deployment Start ==="
 # ============================================
 # CONFIGURATION BASE DE DONNÉES
 # ============================================
-DB_HOST_VAL=${DB_HOST:-${MYSQLHOST:-mysql.railway.internal}}
-DB_PORT_VAL=${DB_PORT:-${MYSQLPORT:-3306}}
-DB_DATABASE_VAL=${DB_DATABASE:-${MYSQLDATABASE:-railway}}
-DB_USERNAME_VAL=${DB_USERNAME:-${MYSQLUSER:-root}}
-DB_PASSWORD_VAL=${DB_PASSWORD:-${MYSQLPASSWORD:-}}
+# Railway MySQL variables
+if [ -n "$MYSQLHOST" ]; then
+    DB_HOST_VAL="$MYSQLHOST"
+    DB_PORT_VAL="${MYSQLPORT:-3306}"
+    DB_DATABASE_VAL="${MYSQLDATABASE:-railway}"
+    DB_USERNAME_VAL="${MYSQLUSER:-root}"
+    DB_PASSWORD_VAL="${MYSQLPASSWORD:-}"
+elif [ -n "$DB_HOST" ]; then
+    DB_HOST_VAL="$DB_HOST"
+    DB_PORT_VAL="${DB_PORT:-3306}"
+    DB_DATABASE_VAL="${DB_DATABASE:-railway}"
+    DB_USERNAME_VAL="${DB_USERNAME:-root}"
+    DB_PASSWORD_VAL="${DB_PASSWORD:-}"
+elif [ -n "$DATABASE_URL" ]; then
+    # Parse DATABASE_URL format: mysql://user:password@host:port/database
+    DB_HOST_VAL=$(echo "$DATABASE_URL" | sed -n 's/.*@\([^:]*\):.*/\1/p')
+    DB_PORT_VAL=$(echo "$DATABASE_URL" | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
+    DB_DATABASE_VAL=$(echo "$DATABASE_URL" | sed -n 's/.*\/\([^?]*\).*/\1/p')
+    DB_USERNAME_VAL=$(echo "$DATABASE_URL" | sed -n 's/mysql:\/\/\([^:]*\):.*/\1/p')
+    DB_PASSWORD_VAL=$(echo "$DATABASE_URL" | sed -n 's/mysql:\/\/[^:]*:\([^@]*\)@.*/\1/p')
+else
+    DB_HOST_VAL="mysql.railway.internal"
+    DB_PORT_VAL="3306"
+    DB_DATABASE_VAL="railway"
+    DB_USERNAME_VAL="root"
+    DB_PASSWORD_VAL=""
+fi
+
+echo "DB Configuration:"
+echo "  Host: $DB_HOST_VAL"
+echo "  Port: $DB_PORT_VAL"
+echo "  Database: $DB_DATABASE_VAL"
+echo "  User: $DB_USERNAME_VAL"
 
 # ============================================
 # CONFIGURATION APP URL
@@ -117,16 +145,16 @@ php artisan storage:link --force 2>/dev/null || true
 # ATTENTE BASE DE DONNÉES
 # ============================================
 echo "Waiting for database..."
-sleep 15
+sleep 10
 
-echo "Testing database connection..."
+echo "Testing database connection with mysql client..."
 DB_READY=false
-for i in {1..30}; do
-    if php artisan tinker --execute="DB::connection()->getPdo();" 2>/dev/null; then
+for i in {1..15}; do
+    if mysql -h "$DB_HOST_VAL" -P "$DB_PORT_VAL" -u "$DB_USERNAME_VAL"${DB_PASSWORD_VAL:+" -p$DB_PASSWORD_VAL"} -e "SELECT 1" "$DB_DATABASE_VAL" >/dev/null 2>&1; then
         DB_READY=true
         break
     fi
-    echo "Waiting for database connection... ($i/30)"
+    echo "Waiting for database connection... ($i/15)"
     sleep 2
 done
 
