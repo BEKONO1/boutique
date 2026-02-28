@@ -21,9 +21,7 @@ DB_PASSWORD_VAL=${DB_PASSWORD:-${MYSQL_ROOT_PASSWORD:-}}
 
 echo "=== Database Configuration ==="
 echo "Host: $DB_HOST_VAL"
-echo "Port: $DB_PORT_VAL"
 echo "Database: $DB_DATABASE_VAL"
-echo "User: $DB_USERNAME_VAL"
 
 # ============================================
 # CRÉATION .env
@@ -32,33 +30,59 @@ if [ ! -f ".env" ]; then
     cp .env.example .env
 fi
 
-# Update .env - always set APP_URL and ASSET_URL
+# Get APP_URL from Railway or use default
 APP_URL_VAL=${APP_URL:-https://boutique-production-4ebe.up.railway.app}
-sed -i "s|APP_URL=.*|APP_URL=$APP_URL_VAL|" .env
 
-# Ensure ASSET_URL is set to same as APP_URL
-if grep -q "ASSET_URL=" .env; then
-    sed -i "s|ASSET_URL=.*|ASSET_URL=$APP_URL_VAL|" .env
+# Set all required environment variables
+echo "=== Setting environment variables ==="
+
+# APP_URL
+sed -i "s|^APP_URL=.*|APP_URL=$APP_URL_VAL|" .env
+
+# ASSET_URL - CRITICAL for CSS
+if grep -q "^ASSET_URL=" .env; then
+    sed -i "s|^ASSET_URL=.*|ASSET_URL=$APP_URL_VAL|" .env
 else
     echo "ASSET_URL=$APP_URL_VAL" >> .env
 fi
 
-sed -i "s|APP_DEBUG=.*|APP_DEBUG=true|" .env
-sed -i "s|LOG_CHANNEL=.*|LOG_CHANNEL=stderr|" .env
-sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST_VAL|" .env
-sed -i "s|DB_PORT=.*|DB_PORT=$DB_PORT_VAL|" .env
-sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_DATABASE_VAL|" .env
-sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME_VAL|" .env
-sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD_VAL|" .env
-sed -i "s|DEVELOPMENT_ENVIRONMENT=.*|DEVELOPMENT_ENVIRONMENT=true|" .env
-sed -i "s|SESSION_DRIVER=.*|SESSION_DRIVER=file|" .env
-sed -i "s|CACHE_DRIVER=.*|CACHE_DRIVER=file|" .env
+# WEB_THEME - Set default theme
+if grep -q "^WEB_THEME=" .env; then
+    sed -i "s|^WEB_THEME=.*|WEB_THEME=theme_aster|" .env
+else
+    echo "WEB_THEME=theme_aster" >> .env
+fi
+
+# Other settings
+sed -i "s|^APP_DEBUG=.*|APP_DEBUG=true|" .env
+sed -i "s|^LOG_CHANNEL=.*|LOG_CHANNEL=stderr|" .env
+sed -i "s|^SESSION_DRIVER=.*|SESSION_DRIVER=file|" .env
+sed -i "s|^CACHE_DRIVER=.*|CACHE_DRIVER=file|" .env
+sed -i "s|^DEVELOPMENT_ENVIRONMENT=.*|DEVELOPMENT_ENVIRONMENT=true|" .env
+sed -i "s|^APP_ENV=.*|APP_ENV=production|" .env
+sed -i "s|^APP_MODE=.*|APP_MODE=live|" .env
+
+# Database settings
+sed -i "s|^DB_CONNECTION=.*|DB_CONNECTION=mysql|" .env
+sed -i "s|^DB_HOST=.*|DB_HOST=$DB_HOST_VAL|" .env
+sed -i "s|^DB_PORT=.*|DB_PORT=$DB_PORT_VAL|" .env
+sed -i "s|^DB_DATABASE=.*|DB_DATABASE=$DB_DATABASE_VAL|" .env
+sed -i "s|^DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME_VAL|" .env
+sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD_VAL|" .env
+
+echo "=== APP_URL: $APP_URL_VAL"
+echo "=== ASSET_URL: $APP_URL_VAL"
+echo "=== WEB_THEME: theme_aster"
 
 echo "=== Generating app key ==="
 php artisan key:generate --force
 
 echo "=== Creating storage link ==="
 php artisan storage:link --force 2>/dev/null || true
+
+echo "=== Copying theme assets ==="
+mkdir -p public/themes
+cp -rf resources/themes/* public/themes/ 2>/dev/null || true
 
 echo "=== Clearing cache ==="
 php artisan config:clear 2>/dev/null || true
@@ -68,8 +92,9 @@ php artisan view:clear 2>/dev/null || true
 echo "=== Setting permissions ==="
 chmod -R 777 storage bootstrap/cache 2>/dev/null || true
 
-echo "=== Starting PHP built-in server on port 8080 ==="
-echo "APP_URL is: $APP_URL_VAL"
+echo "=== Starting PHP server on port 8080 ==="
+echo "=== Final APP_URL: $(grep APP_URL .env | head -1) ==="
+echo "=== Final ASSET_URL: $(grep ASSET_URL .env | head -1) ==="
 
 cd /var/www/html/public
 exec php -S 0.0.0.0:8080 -t /var/www/html/public
