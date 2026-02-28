@@ -11,15 +11,19 @@ export SESSION_DRIVER=file
 export CACHE_DRIVER=file
 
 # ============================================
-# CONFIGURATION BASE DE DONNÉES
+# CONFIGURATION BASE DE DONNÉES - Railway variables
 # ============================================
-DB_HOST_VAL=${MYSQLHOST:-${DB_HOST:-mysql.railway.internal}}
-DB_PORT_VAL=${MYSQLPORT:-${DB_PORT:-3306}}
-DB_DATABASE_VAL=${MYSQLDATABASE:-${DB_DATABASE:-railway}}
-DB_USERNAME_VAL=${MYSQLUSER:-${DB_USERNAME:-root}}
-DB_PASSWORD_VAL=${MYSQLPASSWORD:-${DB_PASSWORD:-}}
+DB_HOST_VAL=${MYSQLHOST:-mysql.railway.internal}
+DB_PORT_VAL=${MYSQLPORT:-3306}
+DB_DATABASE_VAL=${DB_DATABASE:-railway}
+DB_USERNAME_VAL=${DB_USERNAME:-root}
+DB_PASSWORD_VAL=${DB_PASSWORD:-${MYSQL_ROOT_PASSWORD:-}}
 
-echo "DB Host: $DB_HOST_VAL"
+echo "=== Database Configuration ==="
+echo "Host: $DB_HOST_VAL"
+echo "Port: $DB_PORT_VAL"
+echo "Database: $DB_DATABASE_VAL"
+echo "User: $DB_USERNAME_VAL"
 
 # ============================================
 # CRÉATION .env
