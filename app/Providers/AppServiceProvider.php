@@ -67,6 +67,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Force theme_aster for Railway deployment
+        Config::set('app.web_theme', 'theme_aster');
+
         if (!in_array(request()->ip(), ['127.0.0.1', '::1']) && env('FORCE_HTTPS')) {
             \URL::forceScheme('https');
         }
