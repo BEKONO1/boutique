@@ -30,14 +30,16 @@ RUN cp .env.example .env
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
 
 ENV NODE_OPTIONS=--openssl-legacy-provider
-ENV SESSION_DRIVER=file
-ENV CACHE_DRIVER=file
 RUN npm install && npm run production
 
 RUN mkdir -p storage/app/public public/storage public/themes \
     && cp -rf resources/themes/* public/themes/ \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
+
+RUN a2enmod rewrite headers
+
+COPY apache-vhost.conf /etc/apache2/sites-available/000-default.conf
 
 RUN chmod +x start.sh
 

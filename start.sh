@@ -7,9 +7,11 @@ echo "=== Railway Deployment Start ==="
 export APP_DEBUG=true
 export LOG_CHANNEL=stderr
 export DEVELOPMENT_ENVIRONMENT=true
+export SESSION_DRIVER=file
+export CACHE_DRIVER=file
 
 # ============================================
-# CONFIGURATION BASE DE DONNÉES (simplifiée)
+# CONFIGURATION BASE DE DONNÉES
 # ============================================
 DB_HOST_VAL=${MYSQLHOST:-${DB_HOST:-mysql.railway.internal}}
 DB_PORT_VAL=${MYSQLPORT:-${DB_PORT:-3306}}
@@ -45,20 +47,8 @@ sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_DATABASE_VAL|" .env
 sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME_VAL|" .env
 sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD_VAL|" .env
 sed -i "s|DEVELOPMENT_ENVIRONMENT=.*|DEVELOPMENT_ENVIRONMENT=true|" .env
-
-# Ensure SESSION_DRIVER is set to file
-if grep -q "SESSION_DRIVER=" .env; then
-    sed -i "s|SESSION_DRIVER=.*|SESSION_DRIVER=file|" .env
-else
-    echo "SESSION_DRIVER=file" >> .env
-fi
-
-# Ensure CACHE_DRIVER is set to file
-if grep -q "CACHE_DRIVER=" .env; then
-    sed -i "s|CACHE_DRIVER=.*|CACHE_DRIVER=file|" .env
-else
-    echo "CACHE_DRIVER=file" >> .env
-fi
+sed -i "s|SESSION_DRIVER=.*|SESSION_DRIVER=file|" .env
+sed -i "s|CACHE_DRIVER=.*|CACHE_DRIVER=file|" .env
 
 echo "=== Generating app key ==="
 php artisan key:generate --force
@@ -71,30 +61,13 @@ php artisan config:clear 2>/dev/null || true
 php artisan cache:clear 2>/dev/null || true
 php artisan view:clear 2>/dev/null || true
 
-echo "=== Copying theme assets ==="
-mkdir -p public/themes
-cp -rf resources/themes/* public/themes/ 2>/dev/null || true
-
-# Fix theme URLs in database if it exists
-echo "=== Fixing theme URLs in database ==="
-php artisan tinker --execute="
-try {
-    // Update theme paths in business_settings
-    \$settings = \App\Models\BusinessSetting::whereIn('type', ['theme','system_default_theme','seller_registration'])->get();
-    foreach (\$settings as \$s) {
-        echo 'Found: ' . \$s->type . PHP_EOL;
-    }
-} catch (\Exception \$e) {
-    echo 'Error: ' . \$e->getMessage() . PHP_EOL;
-}
-" 2>/dev/null || true
-
 echo "=== Setting permissions ==="
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
-echo "=== Starting PHP server on port 8080 ==="
-echo "APP_URL is: $APP_URL"
+echo "=== Starting Apache on port 8080 ==="
+echo "APP_URL is: $APP_URL_VAL"
 
-cd /var/www/html/public
-exec php -S 0.0.0.0:8080 -t /var/www/html/public
+# Test Apache config and start
+apachectl configtest
+exec apache2-foreground
