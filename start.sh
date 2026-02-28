@@ -26,16 +26,17 @@ if [ ! -f ".env" ]; then
     cp .env.example .env
 fi
 
-# Update .env - use Railway's APP_URL if available
-if [ -n "$APP_URL" ]; then
-    sed -i "s|APP_URL=.*|APP_URL=$APP_URL|" .env
-    sed -i "s|ASSET_URL=.*|ASSET_URL=$APP_URL|" .env
+# Update .env - always set APP_URL and ASSET_URL
+APP_URL_VAL=${APP_URL:-https://boutique-production-4ebe.up.railway.app}
+sed -i "s|APP_URL=.*|APP_URL=$APP_URL_VAL|" .env
+
+# Ensure ASSET_URL is set to same as APP_URL
+if grep -q "ASSET_URL=" .env; then
+    sed -i "s|ASSET_URL=.*|ASSET_URL=$APP_URL_VAL|" .env
+else
+    echo "ASSET_URL=$APP_URL_VAL" >> .env
 fi
 
-# Add ASSET_URL if not exists
-if ! grep -q "ASSET_URL=" .env; then
-    echo "ASSET_URL=${APP_URL:-https://boutique-production-4ebe.up.railway.app}" >> .env
-fi
 sed -i "s|APP_DEBUG=.*|APP_DEBUG=true|" .env
 sed -i "s|LOG_CHANNEL=.*|LOG_CHANNEL=stderr|" .env
 sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST_VAL|" .env
@@ -44,6 +45,20 @@ sed -i "s|DB_DATABASE=.*|DB_DATABASE=$DB_DATABASE_VAL|" .env
 sed -i "s|DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME_VAL|" .env
 sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD_VAL|" .env
 sed -i "s|DEVELOPMENT_ENVIRONMENT=.*|DEVELOPMENT_ENVIRONMENT=true|" .env
+
+# Ensure SESSION_DRIVER is set to file
+if grep -q "SESSION_DRIVER=" .env; then
+    sed -i "s|SESSION_DRIVER=.*|SESSION_DRIVER=file|" .env
+else
+    echo "SESSION_DRIVER=file" >> .env
+fi
+
+# Ensure CACHE_DRIVER is set to file
+if grep -q "CACHE_DRIVER=" .env; then
+    sed -i "s|CACHE_DRIVER=.*|CACHE_DRIVER=file|" .env
+else
+    echo "CACHE_DRIVER=file" >> .env
+fi
 
 echo "=== Generating app key ==="
 php artisan key:generate --force
