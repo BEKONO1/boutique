@@ -29,17 +29,19 @@ RUN cp .env.example .env
 
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
 
-RUN npm install --production
+RUN npm install && npm run production
 
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache public/storage
 
-RUN a2enmod rewrite
+RUN a2enmod rewrite headers
 
 COPY ./.htaccess /var/www/html/public/.htaccess
 
+COPY apache-vhost.conf /etc/apache2/sites-available/000-default.conf
+
 RUN chmod +x start.sh
 
-EXPOSE ${PORT:-8000}
+EXPOSE 8080
 
 CMD ["./start.sh"]

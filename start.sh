@@ -6,7 +6,6 @@ echo "=== Railway Deployment Start ==="
 # ============================================
 # CONFIGURATION BASE DE DONNÉES
 # ============================================
-# Railway fournit les variables DB_* ou MYSQL*
 DB_HOST_VAL=${DB_HOST:-${MYSQLHOST:-mysql.railway.internal}}
 DB_PORT_VAL=${DB_PORT:-${MYSQLPORT:-3306}}
 DB_DATABASE_VAL=${DB_DATABASE:-${MYSQLDATABASE:-railway}}
@@ -40,7 +39,6 @@ fi
 if [ -f ".env" ]; then
     echo "Updating existing .env file..."
 
-    # URL de l'application
     sed -i "s|^APP_URL=.*|APP_URL=${APP_URL_VAL}|g" .env
     sed -i "s|^ASSET_URL=.*|ASSET_URL=${APP_URL_VAL}|g" .env
 
@@ -48,18 +46,16 @@ if [ -f ".env" ]; then
         echo "ASSET_URL=${APP_URL_VAL}" >> .env
     fi
 
-    # Base de données
     sed -i "s|^DB_HOST=.*|DB_HOST=${DB_HOST_VAL}|g" .env
     sed -i "s|^DB_PORT=.*|DB_PORT=${DB_PORT_VAL}|g" .env
     sed -i "s|^DB_DATABASE=.*|DB_DATABASE=${DB_DATABASE_VAL}|g" .env
     sed -i "s|^DB_USERNAME=.*|DB_USERNAME=${DB_USERNAME_VAL}|g" .env
     sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD_VAL}|g" .env
 
-    # Cache et session
     sed -i "s|^CACHE_DRIVER=.*|CACHE_DRIVER=${CACHE_DRIVER_VAL}|g" .env
     sed -i "s|^SESSION_DRIVER=.*|SESSION_DRIVER=${SESSION_DRIVER_VAL}|g" .env
+    sed -i "s|^FILESYSTEM_DRIVER=.*|FILESYSTEM_DRIVER=public|g" .env
 
-    # Redis
     sed -i "/^REDIS_HOST=/d" .env
     sed -i "/^REDIS_PORT=/d" .env
     sed -i "/^REDIS_PASSWORD=/d" .env
@@ -73,7 +69,7 @@ else
     echo "Creating new .env file..."
 
     cat > .env << EOF
-APP_NAME="Mon Application"
+APP_NAME="6Valley"
 APP_ENV=production
 APP_KEY=
 APP_DEBUG=false
@@ -115,7 +111,7 @@ echo "Discovering packages..."
 php artisan package:discover --ansi || true
 
 echo "Creating storage link..."
-php artisan storage:link || true
+php artisan storage:link --force
 
 # ============================================
 # ATTENTE BASE DE DONNÉES
@@ -124,7 +120,7 @@ echo "Waiting for database..."
 sleep 10
 
 echo "Testing database connection..."
-until php artisan tinker --execute="DB::connection()-u003egetPdo();" 2>/dev/null; do
+until php artisan tinker --execute="DB::connection()->getPdo();" 2>/dev/null; do
     echo "Waiting for database connection..."
     sleep 2
 done
@@ -138,17 +134,27 @@ echo "Running migrations..."
 php artisan migrate --force --no-interaction || true
 
 # ============================================
-# CACHE
+# CACHE & ASSETS
 # ============================================
 echo "Clearing cache..."
 php artisan config:clear 2>/dev/null || true
 php artisan cache:clear 2>/dev/null || true
+php artisan view:clear 2>/dev/null || true
 
 echo "Caching config..."
 php artisan config:cache --no-interaction || true
+php artisan route:cache --no-interaction || true
+php artisan view:cache --no-interaction || true
 
 # ============================================
-# DÉMARRAGE DU SERVEUR
+# PERMISSIONS
 # ============================================
-echo "=== Starting Server on port ${PORT:-8000} ==="
-php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+echo "Setting permissions..."
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# ============================================
+# DÉMARRAGE APACHE
+# ============================================
+echo "=== Starting Apache on port 8080 ==="
+apache2-foreground
