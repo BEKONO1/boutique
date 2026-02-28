@@ -4,6 +4,8 @@ set -e
 echo "=== Railway Deployment Start ==="
 
 # Enable error reporting
+sed -i "s/APP_DEBUG=.*/APP_DEBUG=true/" .env
+sed -i "s/LOG_CHANNEL=.*/LOG_CHANNEL=stderr/" .env
 export APP_DEBUG=true
 export LOG_CHANNEL=stderr
 
@@ -196,6 +198,13 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 # ============================================
 # DÉMARRAGE SERVEUR PHP
 # ============================================
+echo "=== Testing PHP ==="
+php -v
+
+echo "=== Testing Laravel ==="
+cd /var/www/html
+php artisan --version
+
 echo "=== Starting PHP built-in server on port 8080 ==="
 cd /var/www/html/public
 exec php -S 0.0.0.0:8080 -t /var/www/html/public
