@@ -6,8 +6,11 @@ echo "=== Railway Deployment Start ==="
 # Enable error reporting
 sed -i "s/APP_DEBUG=.*/APP_DEBUG=true/" .env
 sed -i "s/LOG_CHANNEL=.*/LOG_CHANNEL=stderr/" .env
+sed -i "s/DEVELOPMENT_ENVIRONMENT=.*/DEVELOPMENT_ENVIRONMENT=true/" .env
+sed -i "/DEVELOPMENT_ENVIRONMENT=/a DEVELOPMENT_ENVIRONMENT=true" .env 2>/dev/null || true
 export APP_DEBUG=true
 export LOG_CHANNEL=stderr
+export DEVELOPMENT_ENVIRONMENT=true
 
 # ============================================
 # CONFIGURATION BASE DE DONNÉES
