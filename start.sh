@@ -62,12 +62,10 @@ php artisan cache:clear 2>/dev/null || true
 php artisan view:clear 2>/dev/null || true
 
 echo "=== Setting permissions ==="
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+chmod -R 777 storage bootstrap/cache 2>/dev/null || true
 
-echo "=== Starting Apache on port 8080 ==="
+echo "=== Starting PHP built-in server on port 8080 ==="
 echo "APP_URL is: $APP_URL_VAL"
 
-# Test Apache config and start
-apachectl configtest
-exec apache2-foreground
+cd /var/www/html/public
+exec php -S 0.0.0.0:8080 -t /var/www/html/public

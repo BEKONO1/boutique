@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.2-cli
 
 WORKDIR /var/www/html
 
@@ -18,8 +18,7 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql mysqli mbstring exif pcntl bcmath gd zip intl fileinfo \
-    && pecl install redis && docker-php-ext-enable redis
+    && docker-php-ext-install pdo_mysql mysqli mbstring exif pcntl bcmath gd zip intl fileinfo
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -34,13 +33,7 @@ RUN npm install && npm run production
 
 RUN mkdir -p storage/app/public public/storage public/themes \
     && cp -rf resources/themes/* public/themes/ \
-    && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
-
-RUN a2dismod mpm_event mpm_worker mpm_prefork 2>/dev/null || true
-RUN a2enmod rewrite headers
-
-COPY apache-vhost.conf /etc/apache2/sites-available/000-default.conf
 
 RUN chmod +x start.sh
 
