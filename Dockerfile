@@ -29,6 +29,7 @@ RUN cp .env.example .env
 
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
 
+ENV NODE_OPTIONS=--openssl-legacy-provider
 RUN npm install && npm run production
 
 RUN chown -R www-data:www-data /var/www/html \
