@@ -26,9 +26,16 @@ if [ ! -f ".env" ]; then
     cp .env.example .env
 fi
 
-# Update .env
-sed -i "s|APP_URL=.*|APP_URL=${APP_URL:-https://boutique-production-4ebe.up.railway.app}|" .env
-sed -i "s|ASSET_URL=.*|ASSET_URL=${APP_URL:-https://boutique-production-4ebe.up.railway.app}|" .env
+# Update .env - use Railway's APP_URL if available
+if [ -n "$APP_URL" ]; then
+    sed -i "s|APP_URL=.*|APP_URL=$APP_URL|" .env
+    sed -i "s|ASSET_URL=.*|ASSET_URL=$APP_URL|" .env
+fi
+
+# Add ASSET_URL if not exists
+if ! grep -q "ASSET_URL=" .env; then
+    echo "ASSET_URL=${APP_URL:-https://boutique-production-4ebe.up.railway.app}" >> .env
+fi
 sed -i "s|APP_DEBUG=.*|APP_DEBUG=true|" .env
 sed -i "s|LOG_CHANNEL=.*|LOG_CHANNEL=stderr|" .env
 sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST_VAL|" .env
@@ -54,5 +61,8 @@ chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
 echo "=== Starting PHP server on port ${PORT:-8080} ==="
+echo "APP_URL is: $APP_URL"
+echo "ASSET_URL will be used from .env"
+
 cd /var/www/html/public
-exec php -S 0.0.0.0:${PORT:-8080} -t /var/www/html/public
+exec php -S 0.0.0.0:8080 -t /var/www/html/public
