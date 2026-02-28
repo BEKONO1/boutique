@@ -192,5 +192,5 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 # ============================================
 # DÉMARRAGE APACHE
 # ============================================
-echo "=== Starting Apache on port 8080 ==="
-apache2-foreground
+echo "=== Starting Apache ==="
+exec apache2-foreground

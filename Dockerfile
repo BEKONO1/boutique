@@ -45,6 +45,6 @@ COPY apache-vhost.conf /etc/apache2/sites-available/000-default.conf
 
 RUN chmod +x start.sh
 
-EXPOSE 8080
+EXPOSE 80
 
 CMD ["./start.sh"]
