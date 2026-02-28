@@ -105,9 +105,13 @@ cd public && ln -sf ../resources/themes themes 2>/dev/null || true
 cd ..
 
 echo "=== Clearing cache ==="
+rm -f bootstrap/cache/config.php 2>/dev/null || true
 php artisan config:clear 2>/dev/null || true
 php artisan cache:clear 2>/dev/null || true
 php artisan view:clear 2>/dev/null || true
+
+echo "=== Verify theme config ==="
+php artisan tinker --execute="echo 'Theme: ' . config('app.web_theme');"
 
 echo "=== Setting permissions ==="
 chmod -R 777 storage bootstrap/cache 2>/dev/null || true
