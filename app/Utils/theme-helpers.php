@@ -19,7 +19,8 @@ if (!function_exists('theme_asset')) {
 if (!function_exists('theme_root_path')) {
     function theme_root_path(): string
     {
-        return env('WEB_THEME') == null ? 'default' : env('WEB_THEME');
+        $theme = config('app.web_theme');
+        return $theme ?? 'default';
     }
 }
 

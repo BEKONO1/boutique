@@ -101,6 +101,8 @@ php artisan storage:link --force 2>/dev/null || true
 echo "=== Copying theme assets ==="
 mkdir -p public/themes
 cp -rf resources/themes/* public/themes/ 2>/dev/null || true
+cd public && ln -sf ../resources/themes themes 2>/dev/null || true
+cd ..
 
 echo "=== Clearing cache ==="
 php artisan config:clear 2>/dev/null || true

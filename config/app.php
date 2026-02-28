@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Web Theme
+    |--------------------------------------------------------------------------
+    |
+    | This value determines the front-end theme for the application.
+    | Must be set in config to persist after config:cache
+    |
+    */
+
+    'web_theme' => env('WEB_THEME', 'theme_aster'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
