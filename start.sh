@@ -77,6 +77,24 @@ echo "=== WEB_THEME: theme_aster"
 echo "=== Generating app key ==="
 php artisan key:generate --force
 
+echo "=== Configuring theme in database ==="
+php artisan tinker --execute="
+try {
+    // Set theme configuration
+    \App\Models\BusinessSetting::updateOrInsert(
+        ['type' => 'web_theme'],
+        ['value' => 'theme_aster']
+    );
+    \App\Models\BusinessSetting::updateOrInsert(
+        ['type' => 'system_default_theme'],
+        ['value' => 'theme_aster']
+    );
+    echo 'Theme configuration set successfully';
+} catch (\Exception \$e) {
+    echo 'Error: ' . \$e->getMessage();
+}
+" 2>/dev/null || true
+
 echo "=== Creating storage link ==="
 php artisan storage:link --force 2>/dev/null || true
 
