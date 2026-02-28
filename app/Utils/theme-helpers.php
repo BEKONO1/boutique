@@ -19,8 +19,7 @@ if (!function_exists('theme_asset')) {
 if (!function_exists('theme_root_path')) {
     function theme_root_path(): string
     {
-        $theme = config('app.web_theme');
-        return $theme ?? 'default';
+        return 'theme_aster';
     }
 }
 
