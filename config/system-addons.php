@@ -1,25 +1,21 @@
 <?php return array (
   'admin_panel' => 
   array (
-    'active' => '0',
+    'active' => '1',
     'name' => NULL,
     'identifier' => NULL,
-    'username' => 'admin',
-    'purchase_key' => '345edsfgds',
-    'software_id' => 'MzE0NDg1OTc=',
-    'domain' => '192.168.50.107/Backend-6Valley-eCommerce-CMS',
+    'username' => '',
+    'purchase_key' => '',
+    'software_id' => '',
+    'domain' => '',
     'software_type' => 'product',
     'errors' => 
     array (
-      'domain' => 
-      array (
-        0 => 'The domain does not resolve in DNS.',
-      ),
     ),
   ),
   'vendor_panel' => 
   array (
-    'active' => '0',
+    'active' => '1',
     'username' => '',
     'purchase_key' => '',
     'software_id' => '',
@@ -28,7 +24,7 @@
   ),
   'user_app' => 
   array (
-    'active' => '0',
+    'active' => '1',
     'username' => '',
     'purchase_key' => '',
     'software_id' => '',
@@ -37,7 +33,7 @@
   ),
   'vendor_app' => 
   array (
-    'active' => '0',
+    'active' => '1',
     'username' => '',
     'purchase_key' => '',
     'software_id' => '',
@@ -47,20 +43,15 @@
   'deliveryman_app' => 
   array (
     'active' => '1',
-    'name' => 'Kaseem Gibbs',
-    'identifier' => 'tewuqozum@mailinator.com',
-    'username' => 'gutewag',
-    'purchase_key' => 'Accusantium blanditi',
-    'software_id' => 'MzYwODUwNDE=',
-    'domain' => '127.0.0.1:8000',
+    'username' => '',
+    'purchase_key' => '',
+    'software_id' => '',
+    'domain' => '',
     'software_type' => 'addon',
-    'errors' => 
-    array (
-    ),
   ),
   'theme_lifestyle' => 
   array (
-    'active' => '0',
+    'active' => '1',
     'username' => '',
     'purchase_key' => '',
     'software_id' => '',

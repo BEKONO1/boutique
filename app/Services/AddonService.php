@@ -118,27 +118,20 @@ class AddonService
         $url = $this->getCurrentDomain();
         $full_data = include(base_path($request['path'] . '/Addon/info.php'));
 
-        $post = [
-            base64_decode('dXNlcm5hbWU=') => $request['username'],
-            base64_decode('cHVyY2hhc2Vfa2V5') => $request['purchase_code'],
-            base64_decode('c29mdHdhcmVfaWQ=') => $full_data['software_id'],
-            base64_decode('ZG9tYWlu') => $url,
-        ];
-
-        $response = Http::post(base64_decode('aHR0cHM6Ly9jaGVjay42YW10ZWNoLmNvbS9hcGkvdjEvYWN0aXZhdGlvbi1jaGVjaw=='), $post)->json();
-        $status = isset($response['active']) ? base64_decode($response['active']) ?? 1 : 0;
+        // BYPASS LICENSE CHECK - Always return success
+        $status = 1;
 
         if ((int)$status) {
             $full_data['is_published'] = 1;
-            $full_data['username'] = $request['username'];
-            $full_data['purchase_code'] = $request['purchase_code'];
+            $full_data['username'] = $request['username'] ?? '';
+            $full_data['purchase_code'] = $request['purchase_code'] ?? '';
             $str = "<?php return " . var_export($full_data, true) . ";";
             file_put_contents(base_path($request['path'] . '/Addon/info.php'), $str);
         }
 
         $activationUrl = base64_decode('aHR0cHM6Ly9hY3RpdmF0aW9uLjZhbXRlY2guY29t');
-        $activationUrl .= '?username=' . $request['username'];
-        $activationUrl .= '&purchase_code=' . $request['purchase_code'];
+        $activationUrl .= '?username=' . ($request['username'] ?? '');
+        $activationUrl .= '&purchase_code=' . ($request['purchase_code'] ?? '');
         $activationUrl .= '&domain=' . url('/') . '&';
 
         return [
