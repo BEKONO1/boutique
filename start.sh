@@ -111,27 +111,35 @@ echo "Discovering packages..."
 php artisan package:discover --ansi || true
 
 echo "Creating storage link..."
-php artisan storage:link --force
+php artisan storage:link --force 2>/dev/null || true
 
 # ============================================
 # ATTENTE BASE DE DONNÉES
 # ============================================
 echo "Waiting for database..."
-sleep 10
+sleep 15
 
 echo "Testing database connection..."
-until php artisan tinker --execute="DB::connection()->getPdo();" 2>/dev/null; do
-    echo "Waiting for database connection..."
+DB_READY=false
+for i in {1..30}; do
+    if php artisan tinker --execute="DB::connection()->getPdo();" 2>/dev/null; then
+        DB_READY=true
+        break
+    fi
+    echo "Waiting for database connection... ($i/30)"
     sleep 2
 done
 
-echo "Database connected!"
-
-# ============================================
-# MIGRATIONS
-# ============================================
-echo "Running migrations..."
-php artisan migrate --force --no-interaction || true
+if [ "$DB_READY" = true ]; then
+    echo "Database connected!"
+    # ============================================
+    # MIGRATIONS
+    # ============================================
+    echo "Running migrations..."
+    php artisan migrate --force --no-interaction || true
+else
+    echo "Database not available - skipping migrations"
+fi
 
 # ============================================
 # CACHE & ASSETS
