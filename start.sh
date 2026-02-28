@@ -56,13 +56,16 @@ php artisan config:clear 2>/dev/null || true
 php artisan cache:clear 2>/dev/null || true
 php artisan view:clear 2>/dev/null || true
 
+echo "=== Copying theme assets ==="
+mkdir -p public/themes
+cp -rf resources/themes/* public/themes/ 2>/dev/null || true
+
 echo "=== Setting permissions ==="
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
-echo "=== Starting PHP server on port ${PORT:-8080} ==="
+echo "=== Starting PHP server on port 8080 ==="
 echo "APP_URL is: $APP_URL"
-echo "ASSET_URL will be used from .env"
 
 cd /var/www/html/public
 exec php -S 0.0.0.0:8080 -t /var/www/html/public
