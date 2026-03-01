@@ -19,7 +19,13 @@ if (!function_exists('theme_asset')) {
 if (!function_exists('theme_root_path')) {
     function theme_root_path(): string
     {
-        return 'theme_aster';
+        // Resolve theme robustly from config, with safe fallbacks
+        $theme = config('app.web_theme');
+        if ($theme) {
+            return $theme;
+        }
+        $envTheme = env('WEB_THEME');
+        return $envTheme ?? 'default';
     }
 }
 

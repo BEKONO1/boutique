@@ -94,10 +94,19 @@
 
         @if (isset($bannerTypeMainSectionBanner))
             <div class="container rtl pt-0 px-0 px-md-3">
-                <a href="{{$bannerTypeMainSectionBanner->url}}" target="_blank"
-                    class="cursor-pointer d-block">
+                @php
+                    $bannerUrl = null;
+                    if (is_object($bannerTypeMainSectionBanner) && isset($bannerTypeMainSectionBanner->url)) {
+                        $bannerUrl = $bannerTypeMainSectionBanner->url;
+                    } elseif (is_array($bannerTypeMainSectionBanner) && isset($bannerTypeMainSectionBanner['url'])) {
+                        $bannerUrl = $bannerTypeMainSectionBanner['url'];
+                    }
+                @endphp
+                @if (!empty($bannerUrl))
+                    <a href="{{ $bannerUrl }}" target="_blank" class="cursor-pointer d-block">
+                    
                     <img loading="lazy" class="d-block footer_banner_img __inline-63" alt=""
-                         src="{{ getStorageImages(path:$bannerTypeMainSectionBanner->photo_full_url, type: 'wide-banner') }}">
+                         src="{{ getStorageImages(path: $bannerTypeMainSectionBanner->photo_full_url ?? (isset($bannerTypeMainSectionBanner['photo_full_url']) ? $bannerTypeMainSectionBanner['photo_full_url'] : null), type: 'wide-banner') }}">
                 </a>
             </div>
         @endif
@@ -273,4 +282,3 @@
     <script src="{{theme_asset(path: 'public/assets/front-end/js/owl.carousel.min.js')}}"></script>
     <script src="{{ theme_asset(path: 'public/assets/front-end/js/home.js') }}"></script>
 @endpush
-

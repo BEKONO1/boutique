@@ -67,11 +67,19 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Diagnostic: log current theme at boot for prod debugging
+        try {
+            if (function_exists('theme_root_path')) {
+                \Illuminate\Support\Facades\Log::info('Boot theme: ' . theme_root_path());
+            }
+        } catch (\Exception $e) {
+            // ignore logging issues
+        }
         // Force theme_aster for Railway deployment
         Config::set('app.web_theme', 'theme_aster');
 
         if (!in_array(request()->ip(), ['127.0.0.1', '::1']) && env('FORCE_HTTPS')) {
-            \URL::forceScheme('https');
+            \Illuminate\Support\Facades\URL::forceScheme('https');
         }
         if (!App::runningInConsole()) {
             Paginator::useBootstrap();
